@@ -1,1 +1,5 @@
-# chicago-traffic-dashboard
+pandas  
+plotly  
+dash  
+dash-bootstrap-components  
+gunicorn

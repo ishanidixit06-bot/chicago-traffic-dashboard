@@ -1,6 +1,6 @@
-pandas  
-plotly  
-dash  
-dash-bootstrap-components  
-gunicorn  
-gdown
+﻿pandas
+plotly
+dash
+dash-bootstrap-components
+gunicorn
+openpyxl

@@ -851,16 +851,10 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 from dash.dependencies import Input, Output
-import gdown # Import the gdown library
 
 # --- Data Loading and Preparation ---
-# Use gdown to handle the download of the large file from Google Drive
-file_id = '1tnqmi1-TJ7xVTegsPlY7MDuktDhm8wMn'
-output_file = 'traffic_accidents.csv'
-gdown.download(id=file_id, output=output_file, quiet=False)
-
-# Load the dataset from the locally downloaded file
-df = pd.read_csv(output_file)
+# Load the dataset directly from the local Excel file in the project folder
+df = pd.read_excel('traffic_accidents.xlsx', engine='openpyxl')
 
 # Clean column names for easier access
 df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_').str.replace('(', '').str.replace(')', '')

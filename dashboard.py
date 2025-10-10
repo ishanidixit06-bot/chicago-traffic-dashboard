@@ -845,6 +845,381 @@
 #     app.run(debug=True)
 
 
+# import pandas as pd
+# import plotly.express as px
+# import dash
+# import dash_bootstrap_components as dbc
+# from dash import dcc, html
+# from dash.dependencies import Input, Output
+
+# # --- Data Loading and Preparation ---
+# # Load the dataset directly from the local Excel file in the project folder
+# df = pd.read_excel('traffic_accidents.xlsx', engine='openpyxl')
+# # df = pd.read_csv('traffic_accidents.csv')
+
+
+# # Clean column names for easier access
+# df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_').str.replace('(', '').str.replace(')', '')
+
+# # Convert crash_date to datetime and extract year, month, and day of week
+# df['crash_date'] = pd.to_datetime(df['crash_date'], errors='coerce')
+# df['year'] = df['crash_date'].dt.year
+# df['month'] = df['crash_date'].dt.month
+# df['day_of_week'] = df['crash_date'].dt.day_name()
+
+# # Convert intersection_related_i to a more readable format
+# df['intersection_related_i'] = df['intersection_related_i'].apply(lambda x: 'Yes' if x == 'Y' else 'No')
+
+# # --- App Initialization ---
+# app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+# server = app.server # Expose the server for Render
+
+# # --- Controls Layout ---
+# controls = dbc.Card(
+#     [
+#         dbc.Row(
+#             [
+#                 dbc.Col(
+#                     [
+#                         html.Label("Year"),
+#                         dcc.Dropdown(
+#                             id='year-filter',
+#                             options=[{'label': str(year), 'value': year} for year in sorted(df['year'].unique())],
+#                             multi=True,
+#                             placeholder="Select Year(s)"
+#                         ),
+#                     ],
+#                     md=2
+#                 ),
+#                 dbc.Col(
+#                     [
+#                         html.Label("Month"),
+#                         dcc.Dropdown(
+#                             id='month-filter',
+#                             options=[{'label': str(month), 'value': month} for month in sorted(df['month'].unique())],
+#                             multi=True,
+#                             placeholder="Select Month(s)"
+#                         ),
+#                     ],
+#                     md=2
+#                 ),
+#                 dbc.Col(
+#                     [
+#                         html.Label("Day of Week"),
+#                         dcc.Dropdown(
+#                             id='day-filter',
+#                             options=[{'label': day, 'value': day} for day in df['day_of_week'].unique()],
+#                             multi=True,
+#                             placeholder="Select Day(s)"
+#                         ),
+#                     ],
+#                     md=2
+#                 ),
+#                 dbc.Col(
+#                     [
+#                         html.Label("Intersection Related"),
+#                         dcc.Dropdown(
+#                             id='intersection-filter',
+#                             options=[{'label': i, 'value': i} for i in df['intersection_related_i'].unique()],
+#                             placeholder="Yes/No"
+#                         ),
+#                     ],
+#                     md=2
+#                 ),
+#                  dbc.Col(
+#                     [
+#                         html.Label("Lighting Condition"),
+#                         dcc.Dropdown(
+#                             id='lighting-filter',
+#                             options=[{'label': i, 'value': i} for i in df['lighting_condition'].unique()],
+#                             placeholder="Select Lighting"
+#                         ),
+#                     ],
+#                     md=2
+#                 ),
+#                  dbc.Col(
+#                     [
+#                         html.Label("Weather"),
+#                         dcc.Dropdown(
+#                             id='weather-filter',
+#                             options=[{'label': i, 'value': i} for i in df['weather_condition'].unique()],
+#                             placeholder="Select Weather"
+#                         ),
+#                     ],
+#                     md=2
+#                 ),
+#             ]
+#         )
+#     ],
+#     body=True,
+#     className="mb-4"
+# )
+
+# # --- App Layout ---
+# app.layout = dbc.Container([
+#     # Header
+#     dbc.Row([
+#         dbc.Col(html.H1("Chicago Traffic Accidents Dashboard", className="text-center text-primary mt-4 mb-4"), width=12)
+#     ]),
+#     # Filters
+#     dbc.Row([
+#         dbc.Col(controls, width=12)
+#     ]),
+
+#     # Tabs
+#     dcc.Tabs(id="tabs", children=[
+#         # --- Tab A: Overview ---
+#         dcc.Tab(label='Overview', children=[
+#             dbc.Row(
+#                 [
+#                     dbc.Col(dbc.Card(id='kpi-total-crashes', className="text-center p-3"), md=3),
+#                     dbc.Col(dbc.Card(id='kpi-total-injuries', className="text-center p-3"), md=3),
+#                     dbc.Col(dbc.Card(id='kpi-injuries-per-crash', className="text-center p-3"), md=3),
+#                     dbc.Col(dbc.Card(id='kpi-intersection-related', className="text-center p-3"), md=3),
+#                 ], className="mt-4"
+#             ),
+#             dbc.Row(
+#                 [
+#                     dbc.Col(dcc.Graph(id='summary-table-day'), md=6),
+#                     dbc.Col(dcc.Graph(id='summary-table-month'), md=6),
+#                 ], className="mt-4"
+#             )
+#         ]),
+
+#         # --- Tab B: When Crashes Happen ---
+#         dcc.Tab(label='When Crashes Happen', children=[
+#             dbc.Row([
+#                 dbc.Col(dcc.Graph(id='bar-day-of-week'), md=6, className="mt-4"),
+#                 dbc.Col(dcc.Graph(id='heatmap-hour-day'), md=6, className="mt-4"),
+#             ]),
+#              dbc.Row([
+#                 dbc.Col(dcc.Graph(id='line-month'), width=12, className="mt-4"),
+#             ])
+#         ]),
+
+#         # --- Tab C: Severity & Conditions ---
+#         dcc.Tab(label='Severity & Conditions', children=[
+#             dbc.Row([
+#                 dbc.Col([
+#                     dcc.Graph(id='box-injuries-surface', style={'height': '500px'}),
+#                     html.P(id='box-caption', className="text-center fst-italic")
+#                 ], md=6, className="mt-4"),
+#                 dbc.Col([
+#                     dcc.Graph(id='stacked-bar-crash-type', style={'height': '500px'}),
+#                      html.P("Insight: Daylight hours see a higher proportion of rear-end and turning crashes, while nighttime crashes have a higher share of fixed object collisions.", className="text-center fst-italic")
+#                 ], md=6, className="mt-4"),
+#             ]),
+#              dbc.Row([
+#                 dbc.Col([
+#                     dcc.Graph(id='scatter-units-injuries', style={'height': '500px'}),
+#                     html.P("Takeaway: Crashes involving more vehicles tend to result in a higher number of total injuries, though many multi-vehicle incidents still result in zero injuries.", className="text-center fst-italic")
+#                 ], width=12, className="mt-4"),
+#             ])
+#         ]),
+#         # --- Tab D: Contributors & Locations ---
+#         dcc.Tab(label='Contributors & Locations', children=[
+#             dbc.Row([
+#                 dbc.Col(dcc.Graph(id='bar-top-causes'), md=8, className="mt-4"),
+#                 dbc.Col(dcc.Graph(id='pie-intersection'), md=4, className="mt-4"),
+#             ])
+#         ])
+#     ])
+# ], fluid=True)
+
+
+# # --- Callback for Interactivity ---
+# @app.callback(
+#     [
+#         Output('kpi-total-crashes', 'children'),
+#         Output('kpi-total-injuries', 'children'),
+#         Output('kpi-injuries-per-crash', 'children'),
+#         Output('kpi-intersection-related', 'children'),
+#         Output('summary-table-day', 'figure'),
+#         Output('summary-table-month', 'figure'),
+#         Output('bar-day-of-week', 'figure'),
+#         Output('heatmap-hour-day', 'figure'),
+#         Output('line-month', 'figure'),
+#         Output('box-injuries-surface', 'figure'),
+#         Output('box-caption', 'children'),
+#         Output('stacked-bar-crash-type', 'figure'),
+#         Output('scatter-units-injuries', 'figure'),
+#         Output('bar-top-causes', 'figure'),
+#         Output('pie-intersection', 'figure')
+#     ],
+#     [
+#         Input('year-filter', 'value'),
+#         Input('month-filter', 'value'),
+#         Input('day-filter', 'value'),
+#         Input('intersection-filter', 'value'),
+#         Input('lighting-filter', 'value'),
+#         Input('weather-filter', 'value')
+#     ]
+# )
+# def update_dashboard(years, months, days, intersection, lighting, weather):
+#     dff = df.copy()
+
+#     # Apply filters
+#     if years:
+#         dff = dff[dff['year'].isin(years)]
+#     if months:
+#         dff = dff[dff['month'].isin(months)]
+#     if days:
+#         dff = dff[dff['day_of_week'].isin(days)]
+#     if intersection:
+#         dff = dff[dff['intersection_related_i'] == intersection]
+#     if lighting:
+#         dff = dff[dff['lighting_condition'] == lighting]
+#     if weather:
+#         dff = dff[dff['weather_condition'] == weather]
+
+#     # --- Handle No Data ---
+#     if dff.empty:
+#         no_data_fig = {
+#             "layout": {
+#                 "xaxis": {"visible": False},
+#                 "yaxis": {"visible": False},
+#                 "annotations": [{
+#                     "text": "No data for selected filters",
+#                     "xref": "paper", "yref": "paper",
+#                     "showarrow": False, "font": {"size": 20}
+#                 }]
+#             }
+#         }
+#         no_data_kpi = [html.H3("N/A"), html.P("No Data")]
+#         return no_data_kpi, no_data_kpi, no_data_kpi, no_data_kpi, no_data_fig, no_data_fig, no_data_fig, no_data_fig, no_data_fig, no_data_fig, "", no_data_fig, no_data_fig, no_data_fig, no_data_fig
+
+#     # --- Calculations ---
+#     total_crashes = len(dff)
+#     total_injuries = dff['injuries_total'].sum()
+#     injuries_per_crash = total_injuries / total_crashes if total_crashes > 0 else 0
+#     intersection_pct = (dff['intersection_related_i'] == 'Yes').mean() * 100
+
+#     # --- Part A: Overview ---
+#     kpi_crashes = [html.H3(f"{total_crashes:,}"), html.P("Total Crashes")]
+#     kpi_injuries = [html.H3(f"{int(total_injuries):,d}"), html.P("Total Injuries")]
+#     kpi_inj_per_crash = [html.H3(f"{injuries_per_crash:.2f}"), html.P("Avg. Injuries / Crash")]
+#     kpi_intersect = [html.H3(f"{intersection_pct:.1f}%"), html.P("% Intersection-Related")]
+
+#     # Summary Tables
+#     day_summary = dff['day_of_week'].value_counts().nlargest(3)
+#     month_summary = dff['month'].value_counts().nlargest(3)
+
+#     fig_summary_day = px.bar(day_summary, title="<b>Top 3 Days by Crashes</b>", text_auto=True)
+#     fig_summary_month = px.bar(month_summary, title="<b>Top 3 Months by Crashes</b>", text_auto=True)
+
+#     # --- Part B: When Crashes Happen ---
+#     # Bar Chart Day of Week
+#     day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+#     day_counts = dff['day_of_week'].value_counts().reindex(day_order)
+#     highest_day = day_counts.idxmax()
+#     fig_bar_day = px.bar(
+#         day_counts,
+#         x=day_counts.index,
+#         y=day_counts.values,
+#         labels={'x': 'Day of Week', 'y': 'Number of Crashes'},
+#         text_auto=True
+#     )
+#     fig_bar_day.update_layout(title_text=f'<b>Crashes by Day of Week (Highest: {highest_day})</b>')
+
+
+#     # Heatmap
+#     heatmap_data = dff.groupby(['crash_hour', 'day_of_week']).size().reset_index(name='count')
+#     heatmap_pivot = heatmap_data.pivot_table(index='crash_hour', columns='day_of_week', values='count').reindex(columns=day_order)
+#     peak_cell = heatmap_data.loc[heatmap_data['count'].idxmax()]
+#     fig_heatmap = px.imshow(
+#         heatmap_pivot,
+#         labels=dict(x="Day of Week", y="Hour of Day", color="Crash Count"),
+#         y=heatmap_pivot.index,
+#         x=heatmap_pivot.columns,
+#         title="<b>Crash Heatmap: Hour vs. Day of Week</b>"
+#     )
+#     fig_heatmap.add_annotation(x=peak_cell['day_of_week'], y=peak_cell['crash_hour'],
+#                                text=f"Peak: {int(peak_cell['count'])}", showarrow=True, arrowhead=1)
+
+#     # Line Chart
+#     month_counts = dff.groupby('month').size()
+#     fig_line_month = px.line(
+#         x=month_counts.index,
+#         y=month_counts.values,
+#         labels={'x': 'Month', 'y': 'Number of Crashes'},
+#         title='<b>Crashes by Month</b>',
+#         markers=True
+#     )
+
+#     # --- Part C: Severity & Conditions ---
+#     # Box Plot
+#     highest_median_surface = dff.groupby('roadway_surface_cond')['injuries_total'].median().idxmax()
+#     box_caption_text = f"The highest median injury count occurs on '{highest_median_surface}' surfaces."
+#     fig_box = px.box(
+#         dff,
+#         x='roadway_surface_cond',
+#         y='injuries_total',
+#         labels={'roadway_surface_cond': 'Roadway Surface Condition', 'injuries_total': 'Total Injuries'},
+#         title='<b>Injury Severity by Roadway Surface Condition</b>'
+#     )
+
+#     # Stacked Bar
+#     crash_type_by_light = dff.groupby(['lighting_condition', 'first_crash_type']).size().unstack(fill_value=0)
+#     crash_type_pct = crash_type_by_light.div(crash_type_by_light.sum(axis=1), axis=0) * 100
+#     fig_stacked_bar = px.bar(
+#         crash_type_pct,
+#         x=crash_type_pct.index,
+#         y=crash_type_pct.columns,
+#         labels={'x': 'Lighting Condition', 'y': 'Percentage of Crashes'},
+#         barmode='stack'
+#     )
+#     fig_stacked_bar.update_layout(title_text='<b>Crash Type Distribution by Lighting Condition (%)</b>')
+
+#     # Scatter Plot
+#     fig_scatter = px.scatter(
+#         dff,
+#         x='num_units',
+#         y='injuries_total',
+#         trendline='ols',
+#         labels={'num_units': 'Number of Vehicles Involved', 'injuries_total': 'Total Injuries'},
+#         title='<b>Total Injuries vs. Number of Vehicles Involved</b>'
+#     )
+
+#     # --- Part D: Contributors & Locations ---
+#     # Horizontal Bar
+#     top_10_causes = dff['prim_contributory_cause'].value_counts().nlargest(10).sort_values(ascending=True)
+#     top_cause = top_10_causes.index[-1]
+#     fig_bar_causes = px.bar(
+#         top_10_causes,
+#         x=top_10_causes.values,
+#         y=top_10_causes.index,
+#         orientation='h',
+#         text_auto=True
+#     )
+#     fig_bar_causes.update_layout(
+#         title_text=f'<b>Top 10 Primary Crash Causes (#1: {top_cause})</b>',
+#         xaxis_title='Number of Crashes',
+#         yaxis_title='Primary Cause'
+#     )
+
+#     # Pie Chart
+#     intersection_counts = dff['intersection_related_i'].value_counts()
+#     fig_pie = px.pie(
+#         intersection_counts,
+#         names=intersection_counts.index,
+#         values=intersection_counts.values,
+#         title='<b>What % of crashes are intersection-related?</b>',
+#         hole=0.4
+#     )
+#     fig_pie.update_traces(textinfo='percent+label')
+
+#     return (
+#         kpi_crashes, kpi_injuries, kpi_inj_per_crash, kpi_intersect,
+#         fig_summary_day, fig_summary_month,
+#         fig_bar_day, fig_heatmap, fig_line_month,
+#         fig_box, box_caption_text, fig_stacked_bar, fig_scatter,
+#         fig_bar_causes, fig_pie
+#     )
+
+# # --- Run the App ---
+# if __name__ == '__main__':
+#     app.run(debug=True)
+
 import pandas as pd
 import plotly.express as px
 import dash
@@ -854,7 +1229,7 @@ from dash.dependencies import Input, Output
 
 # --- Data Loading and Preparation ---
 # Load the dataset directly from the local Excel file in the project folder
-df = pd.read_excel('traffic_accidents.xlsx', engine='openpyxl')
+df = pd.read_excel('traffic_accidents.xlsx',engine= 'openpyxl')
 
 # Clean column names for easier access
 df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_').str.replace('(', '').str.replace(')', '')
@@ -869,7 +1244,7 @@ df['day_of_week'] = df['crash_date'].dt.day_name()
 df['intersection_related_i'] = df['intersection_related_i'].apply(lambda x: 'Yes' if x == 'Y' else 'No')
 
 # --- App Initialization ---
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(__name__, suppress_callback_exceptions=True)
 server = app.server # Expose the server for Render
 
 # --- Controls Layout ---
@@ -1132,7 +1507,7 @@ def update_dashboard(years, months, days, intersection, lighting, weather):
         title="<b>Crash Heatmap: Hour vs. Day of Week</b>"
     )
     fig_heatmap.add_annotation(x=peak_cell['day_of_week'], y=peak_cell['crash_hour'],
-                               text=f"Peak: {int(peak_cell['count'])}", showarrow=True, arrowhead=1)
+                                text=f"Peak: {int(peak_cell['count'])}", showarrow=True, arrowhead=1)
 
     # Line Chart
     month_counts = dff.groupby('month').size()
@@ -1216,6 +1591,6 @@ def update_dashboard(years, months, days, intersection, lighting, weather):
 
 # --- Run the App ---
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False, host='0.0.0.0', port=8050)
 
 
